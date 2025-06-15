@@ -2,19 +2,6 @@
 
 Sistema distribuído de tradução de textos com comunicação assíncrona através de filas de mensagens, composto por uma API REST e um serviço worker para processamento em background.
 
-## 📋 Índice
-
-- [Visão Geral](#visão-geral)
-- [Arquitetura](#arquitetura)
-- [Tecnologias Utilizadas](#tecnologias-utilizadas)
-- [Pré-requisitos](#pré-requisitos)
-- [Instalação e Execução](#instalação-e-execução)
-- [Endpoints da API](#endpoints-da-api)
-- [Status de Tradução](#status-de-tradução)
-- [Exemplos de Uso](#exemplos-de-uso)
-- [Monitoramento](#monitoramento)
-- [Estrutura do Projeto](#estrutura-do-projeto)
-
 ## 🎯 Visão Geral
 
 O sistema permite traduzir textos de forma assíncrona, onde:
