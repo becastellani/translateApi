@@ -1,0 +1,10 @@
+.npm
+
+*.log
+*.log.*
+npm-debug.log*
+
+node_modules
+.env
+
+/prisma/migrations

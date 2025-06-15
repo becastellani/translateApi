@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres
+    container_name: translate-postgres
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: translate_db
+      POSTGRES_USER: translate_user
+      POSTGRES_PASSWORD: translate_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - translate-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U translate_user -d translate_db"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:4.0-management
+    container_name: translate-rabbitmq
+    ports:
+      - "5672:5672" 
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - translate-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  api-translate:
+    build:
+      context: ./api-translate
+      dockerfile: Dockerfile
+    container_name: api-translate
+    ports:
+      - "4040:4040"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://translate_user:translate_pass@postgres:5432/translate_db
+      RABBIT_MQ: amqp://admin:admin123@rabbitmq:5672
+      PORT: 4040
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - translate-network
+    command: bash -c "npx prisma migrate dev --name generate_tables && npx prisma migrate deploy && node src/swagger.js"
+       
+  worker-translate:
+    build:
+      context: ./worker-translate
+      dockerfile: Dockerfile
+    container_name: worker-translate
+    environment:
+      NODE_ENV: production
+      RABBIT_MQ: amqp://admin:admin123@rabbitmq:5672
+      MAX_RETRIES: 3
+      API_BASE_URL: http://api-translate:4040/api
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - translate-network
+    restart: unless-stopped
+
+networks:
+  translate-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
+  redis_data:
